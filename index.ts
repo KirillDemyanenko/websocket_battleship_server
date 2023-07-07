@@ -3,11 +3,34 @@ import {wsServer} from "./src/ws_server/index.js";
 import {UserLogin, WSRequest} from "./src/ws_server/types.js";
 import {WSCommands} from "./constants.js";
 import {checkUserExist, getUserID} from "./src/ws_server/req.js";
+import {users} from "./src/ws_server/db.js";
+import {User} from "./src/ws_server/models.js";
 
 const HTTP_PORT = 8181;
 
+function showMessage(mes, col?) {
+    let color;
+    switch (col) {
+        case "green":
+            color = 32;
+            break;
+        case "red":
+            color = 31;
+            break;
+        case "yellow":
+            color = 33;
+            break;
+        case "blue":
+            color = 34;
+            break;
+        default:
+            color = 37;
+            break;
+    }
+    console.log(`\x1b[${color}m >>> ${mes} <<< \x1b[0m`);
+}
 
-console.log(`Start static http server on the ${HTTP_PORT} port!`);
+showMessage(`Start static http server on the ${HTTP_PORT} port!`, 'blue');
 httpServer.listen(HTTP_PORT);
 
 wsServer.on('connection', (ws) => {
@@ -32,24 +55,26 @@ wsServer.on('connection', (ws) => {
                                 }),
                             id: 0,
                         }))
-                        console.log(`User with nickname ${user.name} successfully login!`)
+                        showMessage(`User with nickname >>> ${user.name} <<< successfully login!`, 'green')
                     } else {
+                        users.push(new User(user.name, user.password))
                         ws.send(JSON.stringify({
                             type: WSCommands.registration,
                             data:
                                 JSON.stringify({
                                     name: user.name,
-                                    index: 0,
+                                    index: getUserID(user.name),
                                     error: false,
                                     errorText: '',
                                 }),
                             id: 0,
                         }))
+                        showMessage(`User with nickname >>> ${user.name} <<< successfully registered!`, 'green')
                     }
                 }
             }
         } catch (err) {
-            console.log('Parse data error!')
+            showMessage('Parse data error!')
         }
     })
 })
