@@ -1,6 +1,8 @@
 import { httpServer } from "./src/http_server/index.js";
 import {wsServer} from "./src/ws_server/index.js";
-import {WSRequest} from "./src/ws_server/types.js";
+import {UserLogin, WSRequest} from "./src/ws_server/types.js";
+import {WSCommands} from "./constants.js";
+import {checkUserExist, getUserID} from "./src/ws_server/req.js";
 
 const HTTP_PORT = 8181;
 
@@ -13,7 +15,41 @@ wsServer.on('connection', (ws) => {
         if (err) throw new Error(err.message)
     })
     ws.on('message', (data) => {
-        const request = JSON.parse(data.toString()) as WSRequest
-        console.log(JSON.parse(request.data))
+        try {
+            const request = JSON.parse(data.toString()) as WSRequest
+            switch (request.type) {
+                case WSCommands.registration: {
+                    const user = JSON.parse(request.data) as UserLogin;
+                    if (checkUserExist(user.name)) {
+                        ws.send(JSON.stringify({
+                            type: WSCommands.registration,
+                            data:
+                                JSON.stringify({
+                                    name: user.name,
+                                    index: getUserID(user.name),
+                                    error: false,
+                                    errorText: '',
+                                }),
+                            id: 0,
+                        }))
+                        console.log(`User with nickname ${user.name} successfully login!`)
+                    } else {
+                        ws.send(JSON.stringify({
+                            type: WSCommands.registration,
+                            data:
+                                JSON.stringify({
+                                    name: user.name,
+                                    index: 0,
+                                    error: false,
+                                    errorText: '',
+                                }),
+                            id: 0,
+                        }))
+                    }
+                }
+            }
+        } catch (err) {
+            console.log('Parse data error!')
+        }
     })
 })
