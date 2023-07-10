@@ -1,5 +1,7 @@
+import {WSCommands} from "../../constants.js";
+
 export type WSRequest = {
-    type: "reg",
+    type: WSCommands,
     data: string,
     id: number,
 }
@@ -14,4 +16,19 @@ export type UserLoginResponse = {
     index: number,
     error: boolean,
     errorText: string,
+}
+
+export type GameRoom = {
+    idGame: number,
+    idPlayer: number,
+}
+
+export type PlayerInfo = {
+    name: string,
+    index: number,
+}
+
+export type AvailibleRoom = {
+    roomId: number,
+    roomUsers: PlayerInfo[],
 }
