@@ -18,9 +18,14 @@ export type UserLoginResponse = {
     errorText: string,
 }
 
-export type GameRoom = {
+export type GameRoomResponse = {
     idGame: number,
     idPlayer: number,
+}
+
+export type GameRoom = {
+    idGame: number,
+    idPlayers: Record<number, number>,
 }
 
 export type PlayerInfo = {

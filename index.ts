@@ -1,11 +1,11 @@
 import { httpServer } from "./src/http_server/index.js";
 import {wsServer} from "./src/ws_server/index.js";
-import {UserLogin, WSRequest} from "./src/ws_server/types.js";
+import {GameRoomResponse, UserLogin, WSRequest} from "./src/ws_server/types.js";
 import {WSCommands} from "./constants.js";
 import {checkUserExist, getUserID} from "./src/ws_server/req.js";
 import {users} from "./src/ws_server/db.js";
 import {User} from "./src/ws_server/models.js";
-import { createRoom, getAvailibleRooms } from "./src/ws_server/rooms.js";
+import {createGame, createRoom, findUserInRoom, getAvailibleRooms} from "./src/ws_server/rooms.js";
 
 const HTTP_PORT = 8181;
 
@@ -100,8 +100,19 @@ wsServer.on('connection', (ws) => {
                     break;
                 }
                 case WSCommands.addToRoom: {
-                    const roomIndex: {indexRoom: number} = JSON.parse(request.data)
-                    console.log(roomIndex)
+                    const roomIndex: {indexRoom: number} = JSON.parse(request.data);
+                    const players = [findUserInRoom(roomIndex.indexRoom), getUserID('', ws)]
+                    const gameID = createGame(players);
+                    players.forEach(id => {
+                        users[id].ws.send(
+                            JSON.stringify({
+                                type: WSCommands.createGame,
+                                data:
+                                    JSON.stringify(<GameRoomResponse>{idGame: gameID, idPlayer: id === players[0] ? players[1] : players[0]}),
+                                id: 0,
+                            })
+                        )
+                    })
                     break;
                 }
                 default: {
