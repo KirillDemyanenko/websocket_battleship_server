@@ -5,6 +5,7 @@ import {WSCommands} from "./constants.js";
 import {checkUserExist, getUserID} from "./src/ws_server/req.js";
 import {users} from "./src/ws_server/db.js";
 import {User} from "./src/ws_server/models.js";
+import { createRoom, getAvailibleRooms } from "./src/ws_server/rooms.js";
 
 const HTTP_PORT = 8181;
 
@@ -44,6 +45,7 @@ wsServer.on('connection', (ws) => {
                 case WSCommands.registration: {
                     const user = JSON.parse(request.data) as UserLogin;
                     if (checkUserExist(user.name)) {
+                        users[getUserID(user.name)].updateWS(ws)
                         ws.send(JSON.stringify({
                             type: WSCommands.registration,
                             data:
@@ -57,7 +59,7 @@ wsServer.on('connection', (ws) => {
                         }))
                         showMessage(`User with nickname >>> ${user.name} <<< successfully login!`, 'green')
                     } else {
-                        users.push(new User(user.name, user.password))
+                        users.push(new User(user.name, user.password, ws))
                         ws.send(JSON.stringify({
                             type: WSCommands.registration,
                             data:
@@ -71,6 +73,40 @@ wsServer.on('connection', (ws) => {
                         }))
                         showMessage(`User with nickname >>> ${user.name} <<< successfully registered!`, 'green')
                     }
+                    break;
+                }
+                case WSCommands.createRoom: {
+                    createRoom(getUserID('', ws))
+                    const freeRooms = getAvailibleRooms();
+                    const freeUsers = []
+                    freeRooms.forEach(room => {
+                        const id = room.roomUsers.at(0)?.index
+                        if (id != null) {
+                            freeUsers.push([id, users.at(id)?.getWs()])
+                        }
+                    })
+                    freeUsers.forEach(value => {
+                        value[1].send(
+                            JSON.stringify({
+                                type: WSCommands.updateRoom,
+                                data:
+                                    JSON.stringify(freeRooms.filter(room => {
+                                        return room.roomUsers[0].index !== value[0]
+                                        })),
+                                id: 0,
+                            })
+                        )
+                    })
+                    break;
+                }
+                case WSCommands.addToRoom: {
+                    const roomIndex: {indexRoom: number} = JSON.parse(request.data)
+                    console.log(roomIndex)
+                    break;
+                }
+                default: {
+                    console.log(JSON.parse(request.data))
+                    showMessage(`Unknown command!`, 'red')
                 }
             }
         } catch (err) {
