@@ -32,7 +32,12 @@ export type GameCreateResponse = {
   idPlayer: number;
 };
 
-export type GameRoom = {
+export type Room = {
+  idGame: number;
+  idPlayer: number;
+};
+
+export type Game = {
   idGame: number;
   idPlayers: Record<number, number>;
 };
