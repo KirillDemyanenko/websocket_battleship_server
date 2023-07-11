@@ -1,8 +1,10 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
 import {
+  AddUserToRoomRequest,
   GameCreateResponse,
   UserLoginRequest,
+  UserLoginResponse,
   WinnersResponse,
   WSDataExchangeFormat,
 } from './types.js';
@@ -62,17 +64,19 @@ wsServer.on('connection', (ws) => {
         case WSCommands.registration: {
           try {
             const user: UserLoginRequest = JSON.parse(request.data);
+            const userDataForResponse: UserLoginResponse = {
+              name: user.name,
+              index: -1,
+              error: false,
+              errorText: '',
+            };
             if (checkUserExist(user.name)) {
               users[getUserID(user.name)].updateWS(ws);
+              userDataForResponse.index = getUserID(user.name);
               sendResponse(
                 ws,
                 WSCommands.registration,
-                JSON.stringify({
-                  name: user.name,
-                  index: getUserID(user.name),
-                  error: false,
-                  errorText: '',
-                })
+                JSON.stringify(userDataForResponse)
               );
               showMessage(
                 `User with nickname >>> ${user.name} <<< successfully login!`,
@@ -85,28 +89,24 @@ wsServer.on('connection', (ws) => {
                 wins: 0,
               };
               winners.push(newPotentialWinner);
+              userDataForResponse.index = getUserID(user.name);
               sendResponse(
                 ws,
                 WSCommands.registration,
-                JSON.stringify({
-                  name: user.name,
-                  index: getUserID(user.name),
-                  error: false,
-                  errorText: '',
-                })
+                JSON.stringify(userDataForResponse)
               );
-              users.forEach((user) => {
-                sendResponse(
-                  user.ws,
-                  WSCommands.updateWinners,
-                  JSON.stringify(winners)
-                );
-              });
               showMessage(
                 `User with nickname >>> ${user.name} <<< successfully registered!`,
                 Colors.green
               );
             }
+            users.forEach((user) => {
+              sendResponse(
+                  user.ws,
+                  WSCommands.updateWinners,
+                  JSON.stringify(winners)
+              );
+            });
           } catch (err: Error) {
             showMessage(`Login failed!`, Colors.red);
           }
@@ -137,7 +137,7 @@ wsServer.on('connection', (ws) => {
         }
         case WSCommands.addToRoom: {
           try {
-            const roomIndex: { indexRoom: number } = JSON.parse(request.data);
+            const roomIndex: AddUserToRoomRequest = JSON.parse(request.data);
             const players = [
               findUserInRoom(roomIndex.indexRoom),
               getUserID('', ws),
