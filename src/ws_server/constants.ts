@@ -19,3 +19,16 @@ export enum Colors {
   blue = 'blue',
   yellow = 'yellow',
 }
+
+export enum ShipsTypes {
+  small = 'small',
+  medium = 'medium',
+  large = 'large',
+  huge = 'huge',
+}
+
+export enum AttackStatuses {
+  miss = 'miss',
+  killed = 'killed',
+  shot = 'shot',
+}

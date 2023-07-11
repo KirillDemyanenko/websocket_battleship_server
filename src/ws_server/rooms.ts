@@ -1,19 +1,19 @@
 import {
-  AvailibleRoom,
+  UpdateRoomResponse,
   GameRoom,
-  GameRoomResponse,
+  GameCreateResponse,
   PlayerInfo,
 } from './types.js';
 import { users } from './db.js';
 
-export const rooms: GameRoomResponse[] = [];
+export const rooms: GameCreateResponse[] = [];
 export const games = [];
 let currenIdRoom = 0;
 let currenIdGame = 0;
 
 export function createRoom(userID: number): void {
   if (rooms.findIndex((room) => room.idPlayer === userID) < 0) {
-    rooms.push(<GameRoomResponse>{ idGame: currenIdRoom, idPlayer: userID });
+    rooms.push(<GameCreateResponse>{ idGame: currenIdRoom, idPlayer: userID });
     currenIdRoom++;
   }
 }
@@ -34,8 +34,8 @@ export function findUserInRoom(roomIndex: number): number {
   return findingUserID;
 }
 
-export function getAvailibleRooms(): AvailibleRoom[] {
-  const availibleRooms: AvailibleRoom[] = [];
+export function getAvailibleRooms(): UpdateRoomResponse[] {
+  const availibleRooms: UpdateRoomResponse[] = [];
   rooms.forEach((room) => {
     availibleRooms.push({
       roomId: room.idGame,
@@ -45,7 +45,7 @@ export function getAvailibleRooms(): AvailibleRoom[] {
           index: room.idPlayer,
         } as PlayerInfo,
       ],
-    } as AvailibleRoom);
+    } as UpdateRoomResponse);
   });
   return [...availibleRooms];
 }

@@ -1,6 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
-import { GameRoomResponse, UserLogin, WSRequest } from './types.js';
+import { GameCreateResponse, UserLoginRequest, WSDataExchangeFormat } from './types.js';
 import { Colors, WSCommands } from './constants.js';
 import { checkUserExist, getUserID } from './db.js';
 import { users } from './db.js';
@@ -24,10 +24,10 @@ wsServer.on('connection', (ws) => {
   });
   ws.on('message', (data) => {
     try {
-      const request = JSON.parse(data.toString()) as WSRequest;
+      const request = JSON.parse(data.toString()) as WSDataExchangeFormat;
       switch (request.type) {
         case WSCommands.registration: {
-          const user = JSON.parse(request.data) as UserLogin;
+          const user = JSON.parse(request.data) as UserLoginRequest;
           if (checkUserExist(user.name)) {
             users[getUserID(user.name)].updateWS(ws);
             ws.send(
@@ -103,7 +103,7 @@ wsServer.on('connection', (ws) => {
             users[id].ws.send(
               JSON.stringify({
                 type: WSCommands.createGame,
-                data: JSON.stringify(<GameRoomResponse>{
+                data: JSON.stringify(<GameCreateResponse>{
                   idGame: gameID,
                   idPlayer: id === players[0] ? players[1] : players[0],
                 }),

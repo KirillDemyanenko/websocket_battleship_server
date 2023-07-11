@@ -1,14 +1,23 @@
-import { WSCommands } from './constants.js';
+import { AttackStatuses, ShipsTypes, WSCommands } from './constants.js';
 
-export type WSRequest = {
+export type WSDataExchangeFormat = {
   type: WSCommands;
   data: string;
   id: number;
 };
 
-export type UserLogin = {
+export type UserLoginRequest = {
   name: string;
   password: string;
+};
+
+export type WinnersResponse = {
+  name: string;
+  wins: number;
+};
+
+export type AddUserToRoomRequest = {
+  indexRoom: number;
 };
 
 export type UserLoginResponse = {
@@ -18,7 +27,7 @@ export type UserLoginResponse = {
   errorText: string;
 };
 
-export type GameRoomResponse = {
+export type GameCreateResponse = {
   idGame: number;
   idPlayer: number;
 };
@@ -33,7 +42,56 @@ export type PlayerInfo = {
   index: number;
 };
 
-export type AvailibleRoom = {
+export type UpdateRoomResponse = {
   roomId: number;
   roomUsers: PlayerInfo[];
+};
+
+export type Coordinates = {
+  x: number;
+  y: number;
+};
+
+export type ShipsInfo = {
+  position: Coordinates;
+  direction: boolean;
+  length: number;
+  type: ShipsTypes;
+};
+
+export type AddShipRequest = {
+  gameId: number;
+  ships: ShipsInfo[];
+  indexPlayer: number;
+};
+
+export type StartGameResponse = {
+  ships: ShipsInfo[];
+  currentPlayerIndex: number;
+};
+
+export type AttackRequest = {
+  gameId: number;
+  x: number;
+  y: number;
+  indexPlayer: number;
+};
+
+export type AttackResponse = {
+  position: Coordinates;
+  currentPlayer: number;
+  status: AttackStatuses;
+};
+
+export type RandomAttackRequest = {
+  gameId: number;
+  indexPlayer: number;
+};
+
+export type TurnResponse = {
+  currentPlayer: number;
+};
+
+export type FinishGameResponse = {
+  winPlayer: number;
 };
