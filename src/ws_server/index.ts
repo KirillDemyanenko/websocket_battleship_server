@@ -1,15 +1,18 @@
 import { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
-import { GameCreateResponse, UserLoginRequest, WSDataExchangeFormat } from './types.js';
+import {
+  GameCreateResponse,
+  UserLoginRequest,
+  WSDataExchangeFormat,
+} from './types.js';
 import { Colors, WSCommands } from './constants.js';
-import { checkUserExist, getUserID } from './db.js';
-import { users } from './db.js';
+import { checkUserExist, getUserID, users } from './db.js';
 import { User } from './models.js';
 import {
   createGame,
   createRoom,
   findUserInRoom,
-  getAvailibleRooms,
+  getAvailableRooms,
 } from './rooms.js';
 
 const WS_PORT = 3000;
@@ -69,7 +72,7 @@ wsServer.on('connection', (ws) => {
         }
         case WSCommands.createRoom: {
           createRoom(getUserID('', ws));
-          const freeRooms = getAvailibleRooms();
+          const freeRooms = getAvailableRooms();
           const freeUsers = [];
           freeRooms.forEach((room) => {
             const id = room.roomUsers.at(0)?.index;
@@ -93,24 +96,29 @@ wsServer.on('connection', (ws) => {
           break;
         }
         case WSCommands.addToRoom: {
-          const roomIndex: { indexRoom: number } = JSON.parse(request.data);
-          const players = [
-            findUserInRoom(roomIndex.indexRoom),
-            getUserID('', ws),
-          ];
-          const gameID = createGame(players);
-          players.forEach((id) => {
-            users[id].ws.send(
-              JSON.stringify({
-                type: WSCommands.createGame,
-                data: JSON.stringify(<GameCreateResponse>{
-                  idGame: gameID,
-                  idPlayer: id === players[0] ? players[1] : players[0],
-                }),
-                id: 0,
-              })
-            );
-          });
+          try {
+            const roomIndex: { indexRoom: number } = JSON.parse(request.data);
+            const players = [
+              findUserInRoom(roomIndex.indexRoom),
+              getUserID('', ws),
+            ];
+            const gameID = createGame(players);
+            players.forEach((id) => {
+              const newGameInfo: GameCreateResponse = {
+                idGame: gameID,
+                idPlayer: id === players[0] ? players[1] : players[0],
+              };
+              users[id].ws.send(
+                JSON.stringify({
+                  type: WSCommands.createGame,
+                  data: JSON.stringify(newGameInfo),
+                  id: 0,
+                })
+              );
+            });
+          } catch (err: Error) {
+            showMessage(err.message, Colors.red);
+          }
           break;
         }
         default: {
