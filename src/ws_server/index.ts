@@ -1,8 +1,10 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
 import {
+  AddShipRequest,
   AddUserToRoomRequest,
   GameCreateResponse,
+  StartGameResponse,
   UserLoginRequest,
   UserLoginResponse,
   WinnersResponse,
@@ -15,6 +17,7 @@ import {
   createGame,
   createRoom,
   findUserInRoom,
+  games,
   getAvailableRooms,
 } from './rooms.js';
 
@@ -102,9 +105,9 @@ wsServer.on('connection', (ws) => {
             }
             users.forEach((user) => {
               sendResponse(
-                  user.ws,
-                  WSCommands.updateWinners,
-                  JSON.stringify(winners)
+                user.ws,
+                WSCommands.updateWinners,
+                JSON.stringify(winners)
               );
             });
           } catch (err: Error) {
@@ -156,6 +159,44 @@ wsServer.on('connection', (ws) => {
             });
           } catch (err: Error) {
             showMessage(err.message, Colors.red);
+          }
+          break;
+        }
+        case WSCommands.addShips: {
+          const ships: AddShipRequest = JSON.parse(request.data);
+          const isFirstPlayer =
+            games[ships.gameId].idPlayers[0] === ships.indexPlayer;
+          if (isFirstPlayer) {
+            games[ships.gameId].playersShips[0] = [...ships.ships];
+            games[ships.gameId].playersStatus[0] = true;
+          } else {
+            games[ships.gameId].playersShips[1] = [...ships.ships];
+            games[ships.gameId].playersStatus[1] = true;
+          }
+          if (
+            games[ships.gameId].playersStatus[0] &&
+            games[ships.gameId].playersStatus[1]
+          ) {
+            users.forEach((user, id) => {
+              if (
+                games[ships.gameId].idPlayers[0] === id ||
+                games[ships.gameId].idPlayers[1] === id
+              ) {
+                const dataForSent: StartGameResponse = {
+                  ships: isFirstPlayer
+                    ? games[ships.gameId].playersShips[0]
+                    : games[ships.gameId].playersShips[1],
+                  currentPlayerIndex: isFirstPlayer
+                    ? games[ships.gameId].idPlayers[0]
+                    : games[ships.gameId].idPlayers[1],
+                };
+                sendResponse(
+                  user.ws,
+                  WSCommands.startGame,
+                  JSON.stringify(dataForSent)
+                );
+              }
+            });
           }
           break;
         }

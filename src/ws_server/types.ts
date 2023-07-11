@@ -40,6 +40,8 @@ export type Room = {
 export type Game = {
   idGame: number;
   idPlayers: Record<number, number>;
+  playersStatus: Record<boolean, boolean>;
+  playersShips: Record<ShipsInfo, ShipsInfo>;
 };
 
 export type PlayerInfo = {

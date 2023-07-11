@@ -15,7 +15,12 @@ export function createRoom(userID: number): void {
 }
 
 export function createGame(usersID: Record<number, number>): number {
-  const newGame: Game = { idGame: currenIdGame, idPlayers: usersID };
+  const newGame: Game = {
+    idGame: currenIdGame,
+    idPlayers: usersID,
+    playersStatus: [false, false],
+    playersShips: [[], []],
+  };
   games.push(newGame);
   currenIdGame++;
   return currenIdGame - 1;
