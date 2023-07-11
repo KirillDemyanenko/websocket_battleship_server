@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import {showMessage} from "../service/index.js";
 import {GameRoomResponse, UserLogin, WSRequest} from "./types.js";
-import {WSCommands} from "../../constants.js";
+import {WSCommands} from "./constants.js";
 import {checkUserExist, getUserID} from "./req.js";
 import {users} from "./db.js";
 import {User} from "./models.js";

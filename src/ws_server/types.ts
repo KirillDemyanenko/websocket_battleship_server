@@ -1,4 +1,4 @@
-import {WSCommands} from "../../constants.js";
+import {WSCommands} from "./constants.js";
 
 export type WSRequest = {
     type: WSCommands,
