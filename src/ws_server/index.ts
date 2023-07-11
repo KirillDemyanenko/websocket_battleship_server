@@ -1,4 +1,4 @@
-import { WebSocketServer } from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
 import {
   GameCreateResponse,
@@ -21,52 +21,81 @@ export const wsServer = new WebSocketServer({ port: WS_PORT }, () =>
   showMessage(`Start WS server on the ${WS_PORT} port!`, Colors.blue)
 );
 
+function sendResponse(ws: WebSocket, command: WSCommands, data: string): void {
+  try {
+    ws.send(
+      JSON.stringify({
+        type: command,
+        data: data,
+        id: 0,
+      })
+    );
+  } catch (err: Error) {
+    showMessage(
+      `Sending message to client failed with error: ${err.message}`,
+      Colors.red
+    );
+  }
+}
+
 wsServer.on('connection', (ws) => {
+  showMessage(`New user connected!`, Colors.green);
   ws.on('error', (err) => {
     if (err) throw new Error(err.message);
+  });
+  ws.on('close', () => {
+    const userId = getUserID('', ws);
+    if (users[userId]?.name) {
+      showMessage(
+        `User with nickname >>> ${users[userId].name} <<< is disconnected!`,
+        Colors.yellow
+      );
+    } else {
+      showMessage(`Unknown user is disconnected!`, Colors.yellow);
+    }
   });
   ws.on('message', (data) => {
     try {
       const request = JSON.parse(data.toString()) as WSDataExchangeFormat;
       switch (request.type) {
         case WSCommands.registration: {
-          const user = JSON.parse(request.data) as UserLoginRequest;
-          if (checkUserExist(user.name)) {
-            users[getUserID(user.name)].updateWS(ws);
-            ws.send(
-              JSON.stringify({
-                type: WSCommands.registration,
-                data: JSON.stringify({
+          try {
+            const user: UserLoginRequest = JSON.parse(request.data);
+            if (checkUserExist(user.name)) {
+              users[getUserID(user.name)].updateWS(ws);
+              sendResponse(
+                ws,
+                WSCommands.registration,
+                JSON.stringify({
                   name: user.name,
                   index: getUserID(user.name),
                   error: false,
                   errorText: '',
-                }),
-                id: 0,
-              })
-            );
-            showMessage(
-              `User with nickname >>> ${user.name} <<< successfully login!`,
-              Colors.green
-            );
-          } else {
-            users.push(new User(user.name, user.password, ws));
-            ws.send(
-              JSON.stringify({
-                type: WSCommands.registration,
-                data: JSON.stringify({
+                })
+              );
+              showMessage(
+                `User with nickname >>> ${user.name} <<< successfully login!`,
+                Colors.green
+              );
+            } else {
+              users.push(new User(user.name, user.password, ws));
+              sendResponse(
+                ws,
+                WSCommands.registration,
+                JSON.stringify({
                   name: user.name,
                   index: getUserID(user.name),
                   error: false,
                   errorText: '',
-                }),
-                id: 0,
-              })
-            );
-            showMessage(
-              `User with nickname >>> ${user.name} <<< successfully registered!`,
-              Colors.green
-            );
+                })
+              );
+              showMessage(
+                `User with nickname >>> ${user.name} <<< successfully registered!`,
+                Colors.green
+              );
+            }
+          } catch (err: Error) {
+            showMessage(`Login failed!`, Colors.red);
           }
           break;
         }
@@ -81,16 +110,14 @@ wsServer.on('connection', (ws) => {
             }
           });
           freeUsers.forEach((value) => {
-            value[1].send(
-              JSON.stringify({
-                type: WSCommands.updateRoom,
-                data: JSON.stringify(
-                  freeRooms.filter((room) => {
-                    return room.roomUsers[0].index !== value[0];
-                  })
-                ),
-                id: 0,
-              })
+            sendResponse(
+              value[1],
+              WSCommands.updateRoom,
+              JSON.stringify(
+                freeRooms.filter((room) => {
+                  return room.roomUsers[0].index !== value[0];
+                })
+              )
             );
           });
           break;
@@ -108,12 +135,10 @@ wsServer.on('connection', (ws) => {
                 idGame: gameID,
                 idPlayer: id === players[0] ? players[1] : players[0],
               };
-              users[id].ws.send(
-                JSON.stringify({
-                  type: WSCommands.createGame,
-                  data: JSON.stringify(newGameInfo),
-                  id: 0,
-                })
+              sendResponse(
+                users[id].ws,
+                WSCommands.createGame,
+                JSON.stringify(newGameInfo)
               );
             });
           } catch (err: Error) {
@@ -130,4 +155,8 @@ wsServer.on('connection', (ws) => {
       showMessage('Parse data error!');
     }
   });
+});
+
+wsServer.on('error', (err) => {
+  if (err) throw new Error(err.message);
 });
