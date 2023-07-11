@@ -6,7 +6,8 @@
     "type": "module",
     "scripts": {
         "start": "node --loader ts-node/esm index.ts",
-        "start:dev": "nodemon index.ts"
+        "start:dev": "nodemon index.ts",
+        "prettier": "npx prettier . --write"
     },
     "author": "Andrei Auchynnikau",
     "keywords": [],
