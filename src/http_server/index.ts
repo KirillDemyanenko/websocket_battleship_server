@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
+import {showMessage} from "../service/index.js";
+
+const HTTP_PORT = 8181;
 
 export const httpServer = http.createServer(function (req: http.IncomingMessage, res: http.ServerResponse) {
     const __dirname = path.resolve(path.dirname(''));
@@ -15,3 +18,5 @@ export const httpServer = http.createServer(function (req: http.IncomingMessage,
         res.end(data);
     });
 });
+
+httpServer.listen(HTTP_PORT, () => showMessage(`Start static http server on the ${HTTP_PORT} port!`, 'blue'));
