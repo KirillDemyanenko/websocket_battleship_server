@@ -3,10 +3,11 @@ import { showMessage } from '../service/index.js';
 import {
   GameCreateResponse,
   UserLoginRequest,
+  WinnersResponse,
   WSDataExchangeFormat,
 } from './types.js';
 import { Colors, WSCommands } from './constants.js';
-import { checkUserExist, getUserID, users } from './db.js';
+import { checkUserExist, getUserID, users, winners } from './db.js';
 import { User } from './models.js';
 import {
   createGame,
@@ -79,6 +80,11 @@ wsServer.on('connection', (ws) => {
               );
             } else {
               users.push(new User(user.name, user.password, ws));
+              const newPotentialWinner: WinnersResponse = {
+                name: user.name,
+                wins: 0,
+              };
+              winners.push(newPotentialWinner);
               sendResponse(
                 ws,
                 WSCommands.registration,
@@ -89,6 +95,13 @@ wsServer.on('connection', (ws) => {
                   errorText: '',
                 })
               );
+              users.forEach((user) => {
+                sendResponse(
+                  user.ws,
+                  WSCommands.updateWinners,
+                  JSON.stringify(winners)
+                );
+              });
               showMessage(
                 `User with nickname >>> ${user.name} <<< successfully registered!`,
                 Colors.green

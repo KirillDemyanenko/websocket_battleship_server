@@ -1,7 +1,9 @@
 import { User } from './models.js';
 import WebSocket from 'ws';
+import { WinnersResponse } from './types.js';
 
 export const users: User[] = [];
+export const winners: WinnersResponse[] = [];
 
 export function checkUserExist(name: string): boolean {
   return users.filter((user: User) => user.name === name).length > 0;
