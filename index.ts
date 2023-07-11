@@ -6,30 +6,9 @@ import {checkUserExist, getUserID} from "./src/ws_server/req.js";
 import {users} from "./src/ws_server/db.js";
 import {User} from "./src/ws_server/models.js";
 import {createGame, createRoom, findUserInRoom, getAvailibleRooms} from "./src/ws_server/rooms.js";
+import {showMessage} from "./src/service/index.js";
 
 const HTTP_PORT = 8181;
-
-function showMessage(mes, col?) {
-    let color;
-    switch (col) {
-        case "green":
-            color = 32;
-            break;
-        case "red":
-            color = 31;
-            break;
-        case "yellow":
-            color = 33;
-            break;
-        case "blue":
-            color = 34;
-            break;
-        default:
-            color = 37;
-            break;
-    }
-    console.log(`\x1b[${color}m >>> ${mes} <<< \x1b[0m`);
-}
 
 showMessage(`Start static http server on the ${HTTP_PORT} port!`, 'blue');
 httpServer.listen(HTTP_PORT);
