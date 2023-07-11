@@ -2,7 +2,7 @@ import { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
 import { GameRoomResponse, UserLogin, WSRequest } from './types.js';
 import { Colors, WSCommands } from './constants.js';
-import { checkUserExist, getUserID } from './req.js';
+import { checkUserExist, getUserID } from './db.js';
 import { users } from './db.js';
 import { User } from './models.js';
 import {

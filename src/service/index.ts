@@ -1,4 +1,4 @@
-import {Colors} from "../ws_server/constants.js";
+import { Colors } from '../ws_server/constants.js';
 
 export function showMessage(mes: string, col?: Colors): void {
   let color;

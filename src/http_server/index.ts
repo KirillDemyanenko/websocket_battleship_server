@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
-import {showMessage} from '../service/index.js';
-import {Colors} from "../ws_server/constants.js";
+import { showMessage } from '../service/index.js';
+import { Colors } from '../ws_server/constants.js';
 
 const HTTP_PORT = 8181;
 
