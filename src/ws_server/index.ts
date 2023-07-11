@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
 import { GameRoomResponse, UserLogin, WSRequest } from './types.js';
-import { WSCommands } from './constants.js';
+import { Colors, WSCommands } from './constants.js';
 import { checkUserExist, getUserID } from './req.js';
 import { users } from './db.js';
 import { User } from './models.js';
@@ -15,7 +15,7 @@ import {
 const WS_PORT = 3000;
 
 export const wsServer = new WebSocketServer({ port: WS_PORT }, () =>
-  showMessage(`Start WS server on the ${WS_PORT} port!`, 'blue')
+  showMessage(`Start WS server on the ${WS_PORT} port!`, Colors.blue)
 );
 
 wsServer.on('connection', (ws) => {
@@ -44,7 +44,7 @@ wsServer.on('connection', (ws) => {
             );
             showMessage(
               `User with nickname >>> ${user.name} <<< successfully login!`,
-              'green'
+              Colors.green
             );
           } else {
             users.push(new User(user.name, user.password, ws));
@@ -62,7 +62,7 @@ wsServer.on('connection', (ws) => {
             );
             showMessage(
               `User with nickname >>> ${user.name} <<< successfully registered!`,
-              'green'
+              Colors.green
             );
           }
           break;
@@ -115,7 +115,7 @@ wsServer.on('connection', (ws) => {
         }
         default: {
           console.log(JSON.parse(request.data));
-          showMessage(`Unknown command!`, 'red');
+          showMessage(`Unknown command!`, Colors.red);
         }
       }
     } catch (err) {

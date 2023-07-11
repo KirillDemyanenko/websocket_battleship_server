@@ -1,16 +1,18 @@
-export function showMessage(mes, col?) {
+import {Colors} from "../ws_server/constants.js";
+
+export function showMessage(mes: string, col?: Colors): void {
   let color;
   switch (col) {
-    case 'green':
+    case Colors.green:
       color = 32;
       break;
-    case 'red':
+    case Colors.red:
       color = 31;
       break;
-    case 'yellow':
+    case Colors.yellow:
       color = 33;
       break;
-    case 'blue':
+    case Colors.blue:
       color = 34;
       break;
     default:

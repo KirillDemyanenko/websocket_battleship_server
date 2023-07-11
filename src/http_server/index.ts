@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
-import { showMessage } from '../service/index.js';
+import {showMessage} from '../service/index.js';
+import {Colors} from "../ws_server/constants.js";
 
 const HTTP_PORT = 8181;
 
@@ -24,5 +25,5 @@ export const httpServer = http.createServer(function (
 });
 
 httpServer.listen(HTTP_PORT, () =>
-  showMessage(`Start static http server on the ${HTTP_PORT} port!`, 'blue')
+  showMessage(`Start static http server on the ${HTTP_PORT} port!`, Colors.blue)
 );

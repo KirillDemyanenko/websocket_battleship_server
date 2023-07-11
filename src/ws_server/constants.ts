@@ -12,3 +12,10 @@ export enum WSCommands {
   turn = 'turn',
   finish = 'finish',
 }
+
+export enum Colors {
+  red = 'red',
+  green = 'green',
+  blue = 'blue',
+  yellow = 'yellow',
+}
