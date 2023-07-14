@@ -4,7 +4,7 @@ import {
   AddShipRequest,
   AddUserToRoomRequest,
   GameCreateResponse,
-  StartGameResponse,
+  StartGameResponse, TurnResponse,
   UserLoginRequest,
   UserLoginResponse,
   WinnersResponse,
@@ -182,13 +182,10 @@ wsServer.on('connection', (ws) => {
                 games[ships.gameId].idPlayers[0] === id ||
                 games[ships.gameId].idPlayers[1] === id
               ) {
+                const player = games[ships.gameId].idPlayers[0] === id ? 0 : 1
                 const dataForSent: StartGameResponse = {
-                  ships: isFirstPlayer
-                    ? games[ships.gameId].playersShips[0]
-                    : games[ships.gameId].playersShips[1],
-                  currentPlayerIndex: isFirstPlayer
-                    ? games[ships.gameId].idPlayers[0]
-                    : games[ships.gameId].idPlayers[1],
+                  ships: games[ships.gameId].playersShips[player],
+                  currentPlayerIndex:  games[ships.gameId].idPlayers[player]
                 };
                 sendResponse(
                   user.ws,
@@ -197,6 +194,18 @@ wsServer.on('connection', (ws) => {
                 );
               }
             });
+            const moveOf = Math.random() >= 0.5 ? games[ships.gameId].idPlayers[0] : games[ships.gameId].idPlayers[1]
+            const turnData: TurnResponse = {currentPlayer: moveOf}
+            sendResponse(
+                users[games[ships.gameId].idPlayers[0]].ws,
+                WSCommands.turn,
+                JSON.stringify(turnData)
+            );
+            sendResponse(
+                users[games[ships.gameId].idPlayers[1]].ws,
+                WSCommands.turn,
+                JSON.stringify(turnData)
+            );
           }
           break;
         }
