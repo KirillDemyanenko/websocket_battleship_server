@@ -42,6 +42,7 @@ export type Game = {
   idPlayers: Record<number, number>;
   playersStatus: Record<boolean, boolean>;
   playersShips: Record<ShipsInfo, ShipsInfo>;
+  moveOf: number;
 };
 
 export type PlayerInfo = {
