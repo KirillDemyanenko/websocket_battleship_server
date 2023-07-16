@@ -4,14 +4,21 @@ import {
   AddShipRequest,
   AddUserToRoomRequest,
   GameCreateResponse,
-  StartGameResponse, TurnResponse,
+  StartGameResponse,
+  TurnResponse,
   UserLoginRequest,
   UserLoginResponse,
   WinnersResponse,
   WSDataExchangeFormat,
 } from './types.js';
 import { Colors, WSCommands } from './constants.js';
-import { checkUserExist, getUserID, users, winners } from './db.js';
+import {
+  checkUserExist,
+  getUserID,
+  users,
+  ValidateUser,
+  winners,
+} from './db.js';
 import { User } from './models.js';
 import {
   createGame,
@@ -67,12 +74,24 @@ wsServer.on('connection', (ws) => {
         case WSCommands.registration: {
           try {
             const user: UserLoginRequest = JSON.parse(request.data);
+            const validation = ValidateUser(user.name, user.password);
             const userDataForResponse: UserLoginResponse = {
               name: user.name,
               index: -1,
-              error: false,
-              errorText: '',
+              error: !validation,
+              errorText: validation
+                ? ''
+                : `Login: Сan only contain latin letters, numbers, dot and underscore. Password: Minimum five characters, at least one uppercase letter, one lowercase letter, one number and one special symbol. Example: _}24I:9t58Tu?m@e`,
             };
+            if (!validation) {
+              sendResponse(
+                ws,
+                WSCommands.registration,
+                JSON.stringify(userDataForResponse)
+              );
+              console.log('fdsfsd');
+              break;
+            }
             if (checkUserExist(user.name)) {
               users[getUserID(user.name)].updateWS(ws);
               userDataForResponse.index = getUserID(user.name);
@@ -182,10 +201,10 @@ wsServer.on('connection', (ws) => {
                 games[ships.gameId].idPlayers[0] === id ||
                 games[ships.gameId].idPlayers[1] === id
               ) {
-                const player = games[ships.gameId].idPlayers[0] === id ? 0 : 1
+                const player = games[ships.gameId].idPlayers[0] === id ? 0 : 1;
                 const dataForSent: StartGameResponse = {
                   ships: games[ships.gameId].playersShips[player],
-                  currentPlayerIndex:  games[ships.gameId].idPlayers[player]
+                  currentPlayerIndex: games[ships.gameId].idPlayers[player],
                 };
                 sendResponse(
                   user.ws,
@@ -194,17 +213,20 @@ wsServer.on('connection', (ws) => {
                 );
               }
             });
-            const moveOf = Math.random() >= 0.5 ? games[ships.gameId].idPlayers[0] : games[ships.gameId].idPlayers[1]
-            const turnData: TurnResponse = {currentPlayer: moveOf}
+            const moveOf =
+              Math.random() >= 0.5
+                ? games[ships.gameId].idPlayers[0]
+                : games[ships.gameId].idPlayers[1];
+            const turnData: TurnResponse = { currentPlayer: moveOf };
             sendResponse(
-                users[games[ships.gameId].idPlayers[0]].ws,
-                WSCommands.turn,
-                JSON.stringify(turnData)
+              users[games[ships.gameId].idPlayers[0]].ws,
+              WSCommands.turn,
+              JSON.stringify(turnData)
             );
             sendResponse(
-                users[games[ships.gameId].idPlayers[1]].ws,
-                WSCommands.turn,
-                JSON.stringify(turnData)
+              users[games[ships.gameId].idPlayers[1]].ws,
+              WSCommands.turn,
+              JSON.stringify(turnData)
             );
           }
           break;
