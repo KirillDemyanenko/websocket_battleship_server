@@ -1,7 +1,7 @@
 import { UpdateRoomResponse, Game, PlayerInfo, Room } from './types.js';
 import { users } from './db.js';
 
-export const rooms: Room[] = [];
+export let rooms: Room[] = [];
 export const games: Game[] = [];
 let currenIdRoom: number = 0;
 let currenIdGame: number = 0;
@@ -20,8 +20,12 @@ export function createGame(usersID: Record<number, number>): number {
     idPlayers: usersID,
     playersStatus: [false, false],
     playersShips: [[], []],
+    moveOf: -1,
   };
   games.push(newGame);
+  rooms.filter(value => value.idPlayer === newGame.idPlayers[0] || value.idPlayer === newGame.idPlayers[1]).forEach(room => {
+    findUserInRoom(room.idGame)
+  })
   currenIdGame++;
   return currenIdGame - 1;
 }
@@ -30,7 +34,9 @@ export function findUserInRoom(roomIndex: number): number {
   const roomInd = rooms.findIndex((room) => room.idGame === roomIndex);
   if (roomInd < 0) throw new Error('Room not find!');
   const findingUserID = rooms[roomInd].idPlayer;
-  delete rooms.at(roomInd);
+  console.log(rooms)
+  delete rooms.splice(roomInd, 1);
+  console.log(rooms)
   return findingUserID;
 }
 
