@@ -2,7 +2,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
 import {
   AddShipRequest,
-  AddUserToRoomRequest,
+  AddUserToRoomRequest, AttackRequest,
   GameCreateResponse,
   StartGameResponse,
   TurnResponse,
@@ -165,6 +165,25 @@ wsServer.on('connection', (ws) => {
               getUserID('', ws),
             ];
             const gameID = createGame(players);
+            const freeRooms = getAvailableRooms();
+            const freeUsers = [];
+            freeRooms.forEach((room) => {
+              const id = room.roomUsers.at(0)?.index;
+              if (id != null) {
+                freeUsers.push([id, users.at(id)?.getWs()]);
+              }
+            });
+            freeUsers.forEach((value) => {
+              sendResponse(
+                  value[1],
+                  WSCommands.updateRoom,
+                  JSON.stringify(
+                      freeRooms.filter((room) => {
+                        return room.roomUsers[0].index !== value[0];
+                      })
+                  )
+              );
+            });
             players.forEach((id) => {
               const newGameInfo: GameCreateResponse = {
                 idGame: gameID,
@@ -213,11 +232,10 @@ wsServer.on('connection', (ws) => {
                 );
               }
             });
-            const moveOf =
-              Math.random() >= 0.5
+            games[ships.gameId].moveOf =  Math.random() >= 0.5
                 ? games[ships.gameId].idPlayers[0]
                 : games[ships.gameId].idPlayers[1];
-            const turnData: TurnResponse = { currentPlayer: moveOf };
+            const turnData: TurnResponse = { currentPlayer: games[ships.gameId].moveOf };
             sendResponse(
               users[games[ships.gameId].idPlayers[0]].ws,
               WSCommands.turn,
@@ -228,6 +246,15 @@ wsServer.on('connection', (ws) => {
               WSCommands.turn,
               JSON.stringify(turnData)
             );
+          }
+          break;
+        }
+        case WSCommands.attack: {
+          const attack: AttackRequest = JSON.parse(request.data);
+          if (games[attack.gameId].moveOf === attack.indexPlayer) {
+            console.log('ok')
+          } else {
+            console.log('not')
           }
           break;
         }
