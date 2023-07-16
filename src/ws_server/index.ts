@@ -2,7 +2,8 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { showMessage } from '../service/index.js';
 import {
   AddShipRequest,
-  AddUserToRoomRequest, AttackRequest,
+  AddUserToRoomRequest,
+  AttackRequest,
   GameCreateResponse,
   StartGameResponse,
   TurnResponse,
@@ -25,7 +26,7 @@ import {
   createRoom,
   findUserInRoom,
   games,
-  getAvailableRooms,
+  updateRoomList,
 } from './rooms.js';
 
 const WS_PORT = 3000;
@@ -34,7 +35,11 @@ export const wsServer = new WebSocketServer({ port: WS_PORT }, () =>
   showMessage(`Start WS server on the ${WS_PORT} port!`, Colors.blue)
 );
 
-function sendResponse(ws: WebSocket, command: WSCommands, data: string): void {
+export function sendResponse(
+  ws: WebSocket,
+  command: WSCommands,
+  data: string
+): void {
   try {
     ws.send(
       JSON.stringify({
@@ -136,25 +141,7 @@ wsServer.on('connection', (ws) => {
         }
         case WSCommands.createRoom: {
           createRoom(getUserID('', ws));
-          const freeRooms = getAvailableRooms();
-          const freeUsers = [];
-          freeRooms.forEach((room) => {
-            const id = room.roomUsers.at(0)?.index;
-            if (id != null) {
-              freeUsers.push([id, users.at(id)?.getWs()]);
-            }
-          });
-          freeUsers.forEach((value) => {
-            sendResponse(
-              value[1],
-              WSCommands.updateRoom,
-              JSON.stringify(
-                freeRooms.filter((room) => {
-                  return room.roomUsers[0].index !== value[0];
-                })
-              )
-            );
-          });
+          updateRoomList();
           break;
         }
         case WSCommands.addToRoom: {
@@ -165,25 +152,7 @@ wsServer.on('connection', (ws) => {
               getUserID('', ws),
             ];
             const gameID = createGame(players);
-            const freeRooms = getAvailableRooms();
-            const freeUsers = [];
-            freeRooms.forEach((room) => {
-              const id = room.roomUsers.at(0)?.index;
-              if (id != null) {
-                freeUsers.push([id, users.at(id)?.getWs()]);
-              }
-            });
-            freeUsers.forEach((value) => {
-              sendResponse(
-                  value[1],
-                  WSCommands.updateRoom,
-                  JSON.stringify(
-                      freeRooms.filter((room) => {
-                        return room.roomUsers[0].index !== value[0];
-                      })
-                  )
-              );
-            });
+            updateRoomList();
             players.forEach((id) => {
               const newGameInfo: GameCreateResponse = {
                 idGame: gameID,
@@ -232,10 +201,13 @@ wsServer.on('connection', (ws) => {
                 );
               }
             });
-            games[ships.gameId].moveOf =  Math.random() >= 0.5
+            games[ships.gameId].moveOf =
+              Math.random() >= 0.5
                 ? games[ships.gameId].idPlayers[0]
                 : games[ships.gameId].idPlayers[1];
-            const turnData: TurnResponse = { currentPlayer: games[ships.gameId].moveOf };
+            const turnData: TurnResponse = {
+              currentPlayer: games[ships.gameId].moveOf,
+            };
             sendResponse(
               users[games[ships.gameId].idPlayers[0]].ws,
               WSCommands.turn,
@@ -252,9 +224,9 @@ wsServer.on('connection', (ws) => {
         case WSCommands.attack: {
           const attack: AttackRequest = JSON.parse(request.data);
           if (games[attack.gameId].moveOf === attack.indexPlayer) {
-            console.log('ok')
+            console.log('ok');
           } else {
-            console.log('not')
+            console.log('not');
           }
           break;
         }
