@@ -22,52 +22,51 @@ export function checkAttack(
       : games[gameID].idPlayers[0];
   games[gameID].playersShips[enemyId].map((ship: ShipsInfo) => {
     if (JSON.stringify(ship.position) === JSON.stringify(coordinates)) {
-      switch (ship.type) {
-        case ShipsTypes.small: {
-          const x = coordinates.x === 0 ? 0 : coordinates.x - 1;
-          const y = coordinates.y === 0 ? 0 : coordinates.y - 1;
-          const x1 = coordinates.x === 9 ? 9 : coordinates.x + 1;
-          const y1 = coordinates.y === 9 ? 9 : coordinates.y + 1;
-          for (let i = x; i <= x1; i++) {
-            for (let j = y; j <= y1; j++) {
-              const currenCoordinates: Coordinates = { x: i, y: j };
-              attackResponse.push({
-                currentPlayer: userID,
-                status:
-                  JSON.stringify(currenCoordinates) ===
-                  JSON.stringify(coordinates)
-                    ? AttackStatuses.killed
-                    : AttackStatuses.miss,
-                position: currenCoordinates,
-              });
-              games[gameID].openedCells[
-                games[gameID].idPlayers[0] === userID ? 0 : 1
-              ].push(currenCoordinates);
-            }
+      if (ship.type === ShipsTypes.small) {
+        const x = coordinates.x === 0 ? 0 : coordinates.x - 1;
+        const y = coordinates.y === 0 ? 0 : coordinates.y - 1;
+        const x1 = coordinates.x === 9 ? 9 : coordinates.x + 1;
+        const y1 = coordinates.y === 9 ? 9 : coordinates.y + 1;
+        for (let i = x; i <= x1; i++) {
+          for (let j = y; j <= y1; j++) {
+            const currenCoordinates: Coordinates = { x: i, y: j };
+            attackResponse.push({
+              currentPlayer: userID,
+              status:
+                JSON.stringify(currenCoordinates) ===
+                JSON.stringify(coordinates)
+                  ? AttackStatuses.killed
+                  : AttackStatuses.miss,
+              position: currenCoordinates,
+            });
+            games[gameID].openedCells[
+              games[gameID].idPlayers[0] === userID ? 0 : 1
+            ].push(currenCoordinates);
           }
-          break;
-        }
-        case ShipsTypes.medium: {
-          break;
-        }
-        case ShipsTypes.large: {
-          break;
-        }
-        default: {
-          break;
         }
       }
     }
   });
   if (attackResponse.length === 0) {
-    attackResponse.push({
-      currentPlayer: userID,
-      status: AttackStatuses.miss,
-      position: coordinates,
-    });
-    games[gameID].openedCells[
-      games[gameID].idPlayers[0] === userID ? 0 : 1
-    ].push(coordinates);
+    if (checkShip(coordinates, gameID, enemyId)) {
+      attackResponse.push({
+        currentPlayer: userID,
+        status: AttackStatuses.shot,
+        position: coordinates,
+      });
+      games[gameID].openedCells[
+        games[gameID].idPlayers[0] === userID ? 0 : 1
+      ].push(coordinates);
+    } else {
+      attackResponse.push({
+        currentPlayer: userID,
+        status: AttackStatuses.miss,
+        position: coordinates,
+      });
+      games[gameID].openedCells[
+        games[gameID].idPlayers[0] === userID ? 0 : 1
+      ].push(coordinates);
+    }
   }
   return attackResponse;
 }
@@ -145,4 +144,32 @@ export function generateRandomCoordinates(
     };
   }
   return coordinates;
+}
+
+export function checkShip(
+  coordinates: Coordinates,
+  gameID: number,
+  enemyId: number
+): boolean {
+  const coordinatesForCheck: Coordinates[] = [];
+  games[gameID].playersShips[enemyId].forEach((ship) => {
+    if (ship.type !== ShipsTypes.small) {
+      if (ship.direction) {
+        for (let i = ship.position.y; i < ship.position.y + ship.length; i++) {
+          if (isCellClosed(gameID, enemyId, { x: ship.position.x, y: i }))
+            coordinatesForCheck.push({ x: ship.position.x, y: i });
+        }
+      } else {
+        for (let j = ship.position.x; j < ship.position.x + ship.length; j++) {
+          if (isCellClosed(gameID, enemyId, { x: j, y: ship.position.y }))
+            coordinatesForCheck.push({ x: j, y: ship.position.y });
+        }
+      }
+    }
+  });
+  return (
+    coordinatesForCheck.filter((val) => {
+      return JSON.stringify(val) === JSON.stringify(coordinates);
+    }).length > 0
+  );
 }

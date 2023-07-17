@@ -30,10 +30,7 @@ import {
   games,
   updateRoomList,
 } from './rooms.js';
-import {
-  attack,
-  generateRandomCoordinates,
-} from './game-logic.js';
+import { attack, generateRandomCoordinates } from './game-logic.js';
 
 const WS_PORT = 3000;
 
