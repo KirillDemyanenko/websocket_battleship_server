@@ -1,6 +1,14 @@
-import { AttackResponse, Coordinates, ShipsInfo } from './types.js';
-import { AttackStatuses, ShipsTypes } from './constants.js';
+import {
+  AttackRequest,
+  AttackResponse,
+  Coordinates,
+  ShipsInfo,
+  TurnResponse,
+} from './types.js';
+import { AttackStatuses, ShipsTypes, WSCommands } from './constants.js';
 import { games } from './rooms.js';
+import { users } from './db.js';
+import { sendResponse } from './index.js';
 
 export function checkAttack(
   userID: number,
@@ -64,7 +72,7 @@ export function checkAttack(
   return attackResponse;
 }
 
-export function isCellOpen(
+export function isCellClosed(
   gameID: number,
   playerID: number,
   coordinates: Coordinates
@@ -84,4 +92,57 @@ export function isMiss(attackResponse: AttackResponse[]): boolean {
       return value.status !== AttackStatuses.miss;
     }).length === 0
   );
+}
+
+export function attack(attack: AttackRequest): void {
+  const gameID = attack.gameId;
+  const movedPlayer = attack.indexPlayer;
+  if (
+    games[gameID].moveOf === attack.indexPlayer &&
+    isCellClosed(gameID, movedPlayer, { x: attack.x, y: attack.y })
+  ) {
+    const attackResponse: AttackResponse[] = checkAttack(movedPlayer, gameID, {
+      x: attack.x,
+      y: attack.y,
+    });
+    if (isMiss(attackResponse))
+      games[gameID].moveOf =
+        games[gameID].idPlayers[0] === movedPlayer
+          ? games[gameID].idPlayers[1]
+          : games[gameID].idPlayers[0];
+    const turnData: TurnResponse = {
+      currentPlayer: games[attack.gameId].moveOf,
+    };
+    attackResponse.forEach((value) => {
+      [0, 1].forEach((id) => {
+        sendResponse(
+          users[games[gameID].idPlayers[id]].ws,
+          WSCommands.attack,
+          JSON.stringify(value)
+        );
+        sendResponse(
+          users[games[gameID].idPlayers[id]].ws,
+          WSCommands.turn,
+          JSON.stringify(turnData)
+        );
+      });
+    });
+  }
+}
+
+export function generateRandomCoordinates(
+  gameID: number,
+  playerID: number
+): Coordinates {
+  let coordinates: Coordinates = {
+    x: Math.floor(Math.random() * 10),
+    y: Math.floor(Math.random() * 10),
+  };
+  while (!isCellClosed(gameID, playerID, coordinates)) {
+    coordinates = {
+      x: Math.floor(Math.random() * 10),
+      y: Math.floor(Math.random() * 10),
+    };
+  }
+  return coordinates;
 }
