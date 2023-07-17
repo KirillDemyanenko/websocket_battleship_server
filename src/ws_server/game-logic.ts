@@ -49,14 +49,32 @@ export function checkAttack(
   });
   if (attackResponse.length === 0) {
     if (checkShip(coordinates, gameID, enemyId)) {
-      attackResponse.push({
-        currentPlayer: userID,
-        status: AttackStatuses.shot,
-        position: coordinates,
-      });
       games[gameID].openedCells[
         games[gameID].idPlayers[0] === userID ? 0 : 1
       ].push(coordinates);
+      const c = isShipDestroy(coordinates, gameID, enemyId);
+      if (c.length > 0) {
+        c.forEach((value) => {
+          attackResponse.push({
+            currentPlayer: userID,
+            status: AttackStatuses.killed,
+            position: value,
+          });
+        });
+        c.forEach((value) => {
+          attackResponse.push({
+            currentPlayer: userID,
+            status: AttackStatuses.killed,
+            position: value,
+          });
+        });
+      } else {
+        attackResponse.push({
+          currentPlayer: userID,
+          status: AttackStatuses.shot,
+          position: coordinates,
+        });
+      }
     } else {
       attackResponse.push({
         currentPlayer: userID,
@@ -172,4 +190,65 @@ export function checkShip(
       return JSON.stringify(val) === JSON.stringify(coordinates);
     }).length > 0
   );
+}
+
+export function isShipDestroy(
+  coordinates: Coordinates,
+  gameID: number,
+  enemyId: number
+) {
+  const attackedShip = games[gameID].playersShips[enemyId].filter((ship) => {
+    if (ship.type === ShipsTypes.small) return false;
+    if (ship.direction) {
+      for (let i = ship.position.y; i < ship.position.y + ship.length; i++) {
+        if (
+          JSON.stringify({ x: ship.position.x, y: i }) ===
+          JSON.stringify(coordinates)
+        )
+          return true;
+      }
+    } else {
+      for (let j = ship.position.x; j < ship.position.x + ship.length; j++) {
+        if (
+          JSON.stringify({ x: j, y: ship.position.y }) ===
+          JSON.stringify(coordinates)
+        )
+          return true;
+      }
+    }
+    return false;
+  });
+  if (attackedShip.length === 1) {
+    let crashed = [];
+    if (attackedShip[0].direction) {
+      for (
+        let i = attackedShip[0].position.y;
+        i < attackedShip[0].position.y + attackedShip[0].length;
+        i++
+      ) {
+        if (
+          isCellClosed(gameID, enemyId, { x: attackedShip[0].position.x, y: i })
+        )
+          crashed.push({ x: attackedShip[0].position.x, y: i });
+      }
+    } else {
+      for (
+        let j = attackedShip[0].position.x;
+        j < attackedShip[0].position.x + attackedShip[0].length;
+        j++
+      ) {
+        if (
+          isCellClosed(gameID, enemyId, { x: j, y: attackedShip[0].position.y })
+        )
+          crashed.push({ x: j, y: attackedShip[0].position.y });
+      }
+    }
+    const isDie =
+      crashed.filter((val) => {
+        return !JSON.stringify(games[gameID].openedCells).includes(
+          JSON.stringify(val)
+        );
+      }).length === 0;
+    return isDie ? crashed : [];
+  }
 }
