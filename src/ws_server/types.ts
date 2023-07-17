@@ -43,6 +43,7 @@ export type Game = {
   playersStatus: Record<boolean, boolean>;
   playersShips: Record<ShipsInfo, ShipsInfo>;
   moveOf: number;
+  openedCells: Record<Coordinates[], Coordinates[]>;
 };
 
 export type PlayerInfo = {
