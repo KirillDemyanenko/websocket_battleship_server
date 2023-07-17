@@ -4,6 +4,7 @@ import {
   AddShipRequest,
   AddUserToRoomRequest,
   AttackRequest,
+  AttackResponse,
   GameCreateResponse,
   StartGameResponse,
   TurnResponse,
@@ -28,6 +29,7 @@ import {
   games,
   updateRoomList,
 } from './rooms.js';
+import { checkAttack, isCellOpen, isMiss } from './game-logic.js';
 
 const WS_PORT = 3000;
 
@@ -223,10 +225,41 @@ wsServer.on('connection', (ws) => {
         }
         case WSCommands.attack: {
           const attack: AttackRequest = JSON.parse(request.data);
-          if (games[attack.gameId].moveOf === attack.indexPlayer) {
-            console.log('ok');
+          const gameID = attack.gameId;
+          const movedPlayer = attack.indexPlayer;
+          if (
+            games[gameID].moveOf === attack.indexPlayer &&
+            isCellOpen(gameID, movedPlayer, { x: attack.x, y: attack.y })
+          ) {
+            const attackResponse: AttackResponse[] = checkAttack(
+              movedPlayer,
+              gameID,
+              { x: attack.x, y: attack.y }
+            );
+            if (isMiss(attackResponse))
+              games[gameID].moveOf =
+                games[gameID].idPlayers[0] === movedPlayer
+                  ? games[gameID].idPlayers[1]
+                  : games[gameID].idPlayers[0];
+            const turnData: TurnResponse = {
+              currentPlayer: games[attack.gameId].moveOf,
+            };
+            attackResponse.forEach((value) => {
+              [0, 1].forEach((id) => {
+                sendResponse(
+                  users[games[gameID].idPlayers[id]].ws,
+                  WSCommands.attack,
+                  JSON.stringify(value)
+                );
+                sendResponse(
+                  users[games[gameID].idPlayers[id]].ws,
+                  WSCommands.turn,
+                  JSON.stringify(turnData)
+                );
+              });
+            });
           } else {
-            console.log('not');
+            console.log('Wrong move!');
           }
           break;
         }
