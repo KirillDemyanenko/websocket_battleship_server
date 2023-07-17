@@ -23,6 +23,7 @@ export function createGame(usersID: Record<number, number>): number {
     playersStatus: [false, false],
     playersShips: [[], []],
     moveOf: -1,
+    openedCells: [[], []],
   };
   games.push(newGame);
   rooms
